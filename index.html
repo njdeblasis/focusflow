@@ -1,177 +1,84 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>FocusFlow</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    :root{
+      --bg:#f6f8fb;--panel:#ffffff;--ink:#0f172a;--muted:#64748b;--line:#e5e7eb;--brand:#0f172a;
+      --soft:#f1f5f9;--green:#dcfce7;--green-ink:#166534;--red:#fee2e2;--red-ink:#991b1b;
+      --amber:#fef3c7;--amber-ink:#92400e;--blue:#dbeafe;--blue-ink:#1e40af;--shadow:0 10px 30px rgba(15,23,42,.06);
+    }
+    *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+    button,input,select,textarea{font:inherit} button{cursor:pointer}
+    .app{display:grid;grid-template-columns:310px 1fr;gap:24px;max-width:1500px;margin:auto;padding:24px}
+    .card{background:var(--panel);border:1px solid rgba(226,232,240,.8);border-radius:22px;box-shadow:var(--shadow)}
+    .sidebar{display:flex;flex-direction:column;gap:16px;position:sticky;top:24px;height:calc(100vh - 48px)}
+    .brand{padding:24px}.brand h1{margin:0;font-size:31px;letter-spacing:-.04em}.brand p{margin:6px 0 0;color:var(--muted)}
+    .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:20px}.stat{background:var(--soft);border-radius:16px;padding:14px;text-align:center}.stat b{font-size:22px;display:block}.stat span{font-size:12px;color:var(--muted)}
+    .nav{padding:10px;overflow:auto}.nav button{width:100%;border:0;background:transparent;border-radius:14px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;color:var(--ink);margin:2px 0}.nav button.active{background:var(--brand);color:white}.nav small{opacity:.7}
+    .side-actions{margin-top:auto;display:grid;gap:10px}.side-actions button,.btn{border:0;border-radius:15px;background:var(--brand);color:white;padding:13px 16px;font-weight:700}.ghost{background:white!important;color:var(--ink)!important;border:1px solid var(--line)!important}
+    main{display:flex;flex-direction:column;gap:20px}.topbar{display:flex;gap:14px;align-items:center;justify-content:space-between}.headline h2{margin:0;font-size:30px;letter-spacing:-.03em}.headline p{margin:5px 0 0;color:var(--muted)}
+    .search{background:white;border:1px solid var(--line);border-radius:16px;padding:12px 14px;min-width:310px}.search input{border:0;outline:0;width:100%;background:transparent}
+    .big3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.big-card{padding:20px;min-height:128px}.big-card .label{color:var(--muted);font-weight:700;font-size:13px}.big-card p{font-size:17px;font-weight:800;line-height:1.25;margin:14px 0 0}.empty{color:var(--muted)!important;font-weight:500!important}
+    .capture{padding:20px}.capture h3{margin:0 0 14px;font-size:20px}.capture-grid{display:grid;grid-template-columns:1fr 170px 115px 160px 135px auto;gap:12px}.capture input,.capture select,.capture textarea{border:1px solid var(--line);border-radius:14px;background:white;padding:13px 14px;outline:none}.capture input:focus,.search:focus-within{box-shadow:0 0 0 3px #dbeafe;border-color:#93c5fd}
+    .board{padding:20px}.board-head{display:flex;align-items:end;justify-content:space-between;gap:16px;margin-bottom:18px}.board-head h3{margin:0;font-size:24px}.board-head p{margin:4px 0 0;color:var(--muted)}
+    .task-list{display:grid;gap:10px}.task{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:start;background:#f8fafc;border:1px solid #eef2f7;border-radius:18px;padding:15px}.task:hover{background:white;border-color:#dbe3ee}.check{width:22px;height:22px;border-radius:999px;border:2px solid #334155;background:white;margin-top:3px}.check.done{background:#16a34a;border-color:#16a34a;position:relative}.check.done:after{content:'✓';color:white;font-size:14px;position:absolute;left:4px;top:0px}.task-title{font-weight:800;font-size:16px;margin:0}.task-title.done{text-decoration:line-through;color:#94a3b8}.meta{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px;color:var(--muted);font-size:13px}.pill{border-radius:999px;padding:5px 9px;font-size:12px;font-weight:800}.p1{background:var(--red);color:var(--red-ink)}.p2{background:var(--amber);color:var(--amber-ink)}.p3{background:var(--blue);color:var(--blue-ink)}.p4{background:#e2e8f0;color:#334155}.b3{background:var(--green);color:var(--green-ink)}
+    .task-actions{display:flex;gap:8px}.iconbtn{border:0;background:white;border-radius:12px;padding:9px 11px;color:var(--ink)}.iconbtn.starred{background:var(--green);color:var(--green-ink)}.danger{color:#dc2626}.empty-state{text-align:center;padding:46px 18px;border:1px dashed #cbd5e1;border-radius:20px;background:#fbfdff;color:var(--muted)}
+    dialog{border:0;border-radius:22px;box-shadow:0 25px 80px rgba(15,23,42,.25);width:min(560px,92vw);padding:0}dialog::backdrop{background:rgba(15,23,42,.35)}.modal{padding:24px}.modal h3{margin:0 0 14px}.modal textarea{width:100%;height:210px;border:1px solid var(--line);border-radius:16px;padding:14px}.modal .row{display:flex;gap:10px;justify-content:flex-end;margin-top:14px}
+    @media(max-width:1050px){.app{grid-template-columns:1fr}.sidebar{position:static;height:auto}.capture-grid{grid-template-columns:1fr 1fr}.big3{grid-template-columns:1fr}.search{min-width:0;width:100%}.topbar,.board-head{align-items:stretch;flex-direction:column}}
+  </style>
 </head>
-<body class="bg-slate-50">
-  <div id="root"></div>
-  <script type="text/babel">
-    const { useEffect, useMemo, useState } = React;
-
-    const starterTasks = [
-      { id: 1, title: "Finalize structural proposal for client review", project: "Proposals / Pursuits", priority: "P1", due: "Today", context: "Work", big3: true, completed: false, notes: "" },
-      { id: 2, title: "Review open RFIs on active projects", project: "Active Projects", priority: "P1", due: "Today", context: "Work", big3: true, completed: false, notes: "" },
-      { id: 3, title: "Call key client about upcoming pursuit", project: "Business Development", priority: "P2", due: "This Week", context: "Work", big3: true, completed: false, notes: "" }
-    ];
-
-    const projects = ["Inbox", "Active Projects", "Proposals / Pursuits", "Business Development", "KPFF Operations", "Personal"];
-    const priorities = ["P1", "P2", "P3", "P4"];
-    const dueOptions = ["Today", "Tomorrow", "This Week", "Next Week", "Someday"];
-    const views = ["Today", "Big 3", "This Week", "Inbox", "Active Projects", "Proposals / Pursuits", "Business Development", "KPFF Operations", "Personal", "Completed"];
-
-    function badgeClass(priority) {
-      const map = {
-        P1: "bg-red-100 text-red-700",
-        P2: "bg-orange-100 text-orange-700",
-        P3: "bg-blue-100 text-blue-700",
-        P4: "bg-slate-100 text-slate-700"
-      };
-      return "rounded-full px-2.5 py-1 text-xs font-semibold " + (map[priority] || map.P4);
-    }
-
-    function FocusFlow() {
-      const [tasks, setTasks] = useState(() => {
-        try {
-          const saved = localStorage.getItem("focusflow_tasks_v1");
-          return saved ? JSON.parse(saved) : starterTasks;
-        } catch {
-          return starterTasks;
-        }
-      });
-      const [title, setTitle] = useState("");
-      const [project, setProject] = useState("Inbox");
-      const [priority, setPriority] = useState("P2");
-      const [due, setDue] = useState("Today");
-      const [context, setContext] = useState("Work");
-      const [view, setView] = useState("Today");
-      const [search, setSearch] = useState("");
-
-      useEffect(() => {
-        localStorage.setItem("focusflow_tasks_v1", JSON.stringify(tasks));
-      }, [tasks]);
-
-      function addTask() {
-        if (!title.trim()) return;
-        setTasks([{ id: Date.now(), title: title.trim(), project, priority, due, context, big3: false, completed: false, notes: "" }, ...tasks]);
-        setTitle("");
-      }
-
-      function toggleComplete(id) {
-        setTasks(tasks.map(t => t.id === id ? { ...t, completed: !t.completed, big3: t.completed ? t.big3 : false } : t));
-      }
-
-      function toggleBig3(id) {
-        const selected = tasks.filter(t => t.big3 && !t.completed).length;
-        setTasks(tasks.map(t => {
-          if (t.id !== id) return t;
-          if (t.big3) return { ...t, big3: false };
-          if (selected >= 3) return t;
-          return { ...t, big3: true, due: "Today" };
-        }));
-      }
-
-      function deleteTask(id) {
-        if (confirm("Delete this task?")) setTasks(tasks.filter(t => t.id !== id));
-      }
-
-      function exportTasks() {
-        const blob = new Blob([JSON.stringify(tasks, null, 2)], { type: "application/json" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "focusflow-backup.json";
-        a.click();
-        URL.revokeObjectURL(url);
-      }
-
-      const filteredTasks = useMemo(() => {
-        return tasks
-          .filter(t => {
-            if (view === "Today") return t.due === "Today" && !t.completed;
-            if (view === "Big 3") return t.big3 && !t.completed;
-            if (view === "This Week") return ["Today", "Tomorrow", "This Week"].includes(t.due) && !t.completed;
-            if (view === "Completed") return t.completed;
-            return t.project === view && !t.completed;
-          })
-          .filter(t => t.title.toLowerCase().includes(search.toLowerCase()))
-          .sort((a, b) => priorities.indexOf(a.priority) - priorities.indexOf(b.priority));
-      }, [tasks, view, search]);
-
-      const big3 = tasks.filter(t => t.big3 && !t.completed);
-      const openCount = tasks.filter(t => !t.completed).length;
-      const todayCount = tasks.filter(t => t.due === "Today" && !t.completed).length;
-      const completedCount = tasks.filter(t => t.completed).length;
-
-      return (
-        <div className="min-h-screen p-4 text-slate-900 md:p-8">
-          <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[280px_1fr]">
-            <aside className="space-y-4">
-              <div className="rounded-2xl bg-white p-5 shadow-sm">
-                <h1 className="text-3xl font-bold tracking-tight">FocusFlow</h1>
-                <p className="mt-1 text-sm text-slate-500">Digital Big 3 + task triage</p>
-                <div className="mt-5 grid grid-cols-3 gap-2 text-center">
-                  <div className="rounded-xl bg-slate-50 p-3"><div className="text-lg font-bold">{openCount}</div><div className="text-xs text-slate-500">Open</div></div>
-                  <div className="rounded-xl bg-slate-50 p-3"><div className="text-lg font-bold">{todayCount}</div><div className="text-xs text-slate-500">Today</div></div>
-                  <div className="rounded-xl bg-slate-50 p-3"><div className="text-lg font-bold">{completedCount}</div><div className="text-xs text-slate-500">Done</div></div>
-                </div>
-              </div>
-              <div className="rounded-2xl bg-white p-3 shadow-sm">
-                {views.map(v => (
-                  <button key={v} onClick={() => setView(v)} className={`mb-1 w-full rounded-xl px-3 py-2.5 text-left text-sm transition ${view === v ? "bg-slate-900 text-white" : "hover:bg-slate-50"}`}>{v}</button>
-                ))}
-              </div>
-              <button onClick={exportTasks} className="w-full rounded-xl bg-white px-4 py-3 text-sm font-semibold shadow-sm hover:bg-slate-100">Export backup</button>
-            </aside>
-            <main className="space-y-6">
-              <section className="grid gap-4 md:grid-cols-3">
-                {[0,1,2].map(i => {
-                  const task = big3[i];
-                  return <div key={i} className="rounded-2xl bg-white p-5 shadow-sm"><div className="mb-2 text-sm font-semibold text-slate-500">Big 3 #{i+1}</div>{task ? <p className="font-semibold leading-snug">{task.title}</p> : <p className="text-sm text-slate-400">Choose one essential task for today.</p>}</div>;
-                })}
-              </section>
-              <section className="rounded-2xl bg-white p-5 shadow-sm">
-                <h2 className="mb-4 text-lg font-bold">Quick Capture</h2>
-                <div className="grid gap-3 lg:grid-cols-[1fr_180px_110px_140px_120px_auto]">
-                  <input value={title} onChange={e => setTitle(e.target.value)} onKeyDown={e => e.key === "Enter" && addTask()} placeholder="Add a task, action item, follow-up, or reminder..." className="rounded-xl border px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-slate-300" />
-                  <select value={project} onChange={e => setProject(e.target.value)} className="rounded-xl border px-3 py-3 text-sm">{projects.map(p => <option key={p}>{p}</option>)}</select>
-                  <select value={priority} onChange={e => setPriority(e.target.value)} className="rounded-xl border px-3 py-3 text-sm">{priorities.map(p => <option key={p}>{p}</option>)}</select>
-                  <select value={due} onChange={e => setDue(e.target.value)} className="rounded-xl border px-3 py-3 text-sm">{dueOptions.map(d => <option key={d}>{d}</option>)}</select>
-                  <select value={context} onChange={e => setContext(e.target.value)} className="rounded-xl border px-3 py-3 text-sm"><option>Work</option><option>Personal</option></select>
-                  <button onClick={addTask} className="rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-700">Add</button>
-                </div>
-              </section>
-              <section className="rounded-2xl bg-white p-5 shadow-sm">
-                <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                  <div><h2 className="text-xl font-bold">{view}</h2><p className="text-sm text-slate-500">Prioritized by P1 to P4. Star up to three tasks as today's Big 3.</p></div>
-                  <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search tasks" className="rounded-xl border px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-slate-300" />
-                </div>
-                <div className="space-y-3">
-                  {filteredTasks.length === 0 ? <div className="rounded-2xl border border-dashed p-8 text-center text-sm text-slate-500">No tasks here.</div> : filteredTasks.map(t => (
-                    <div key={t.id} className="flex items-start gap-3 rounded-2xl bg-slate-50 p-4">
-                      <button onClick={() => toggleComplete(t.id)} className="mt-1 text-xl">{t.completed ? "✓" : "○"}</button>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-2"><p className={"font-medium " + (t.completed ? "text-slate-400 line-through" : "")}>{t.title}</p><span className={badgeClass(t.priority)}>{t.priority}</span>{t.big3 && <span className="rounded-full bg-green-100 px-2.5 py-1 text-xs font-semibold text-green-700">Big 3</span>}</div>
-                        <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-500"><span>{t.project}</span><span>•</span><span>{t.due}</span><span>•</span><span>{t.context}</span></div>
-                      </div>
-                      <button onClick={() => toggleBig3(t.id)} className={`rounded-xl px-3 py-2 text-sm ${t.big3 ? "bg-green-100 text-green-700" : "bg-white text-slate-600"}`}>★</button>
-                      <button onClick={() => deleteTask(t.id)} className="rounded-xl bg-white px-3 py-2 text-sm text-red-600">Delete</button>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            </main>
-          </div>
-        </div>
-      );
-    }
-
-    ReactDOM.createRoot(document.getElementById("root")).render(<FocusFlow />);
-  </script>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <section class="card brand"><h1>FocusFlow</h1><p>Digital Big 3 + task triage</p><div class="stats"><div class="stat"><b id="openStat">0</b><span>Open</span></div><div class="stat"><b id="todayStat">0</b><span>Today</span></div><div class="stat"><b id="doneStat">0</b><span>Done</span></div></div></section>
+      <nav class="card nav" id="nav"></nav>
+      <div class="side-actions"><button class="ghost" id="exportBtn">Export backup</button><button class="ghost" id="importBtn">Import backup</button><input id="importFile" type="file" accept="application/json" hidden></div>
+    </aside>
+    <main>
+      <div class="topbar"><div class="headline"><h2 id="viewTitle">Today</h2><p id="viewSub">Prioritized by P1 to P4. Star up to three tasks as today's Big 3.</p></div><label class="search"><input id="search" placeholder="Search tasks"></label></div>
+      <section class="big3" id="big3"></section>
+      <section class="card capture"><h3>Quick Capture</h3><div class="capture-grid"><input id="title" placeholder="Add a task, action item, follow-up, or reminder..."><select id="project"></select><select id="priority"><option>P1</option><option selected>P2</option><option>P3</option><option>P4</option></select><select id="due"><option>Today</option><option>Tomorrow</option><option>This Week</option><option>Next Week</option><option>Someday</option></select><select id="context"><option>Work</option><option>Personal</option></select><button class="btn" id="addBtn">Add</button></div></section>
+      <section class="card board"><div class="board-head"><div><h3 id="listTitle">Today</h3><p>Click the circle to complete. Star a task to make it part of today’s Big 3.</p></div></div><div class="task-list" id="taskList"></div></section>
+    </main>
+  </div>
+  <dialog id="importDialog"><div class="modal"><h3>Import backup</h3><p style="color:var(--muted)">This will replace the tasks currently stored in this browser.</p><textarea id="importText" placeholder="Paste backup JSON here"></textarea><div class="row"><button class="btn ghost" onclick="importDialog.close()">Cancel</button><button class="btn" id="confirmImport">Import</button></div></div></dialog>
+<script>
+const projects=['Inbox','Active Projects','Proposals / Pursuits','Business Development','KPFF Operations','Personal'];
+const views=['Today','Big 3','This Week','Inbox','Active Projects','Proposals / Pursuits','Business Development','KPFF Operations','Personal','Completed'];
+const seed=[
+{id:1,title:'Finalize structural proposal for client review',project:'Proposals / Pursuits',priority:'P1',due:'Today',context:'Work',big3:true,completed:false},
+{id:2,title:'Review open RFIs on active projects',project:'Active Projects',priority:'P1',due:'Today',context:'Work',big3:true,completed:false},
+{id:3,title:'Call key client about upcoming pursuit',project:'Business Development',priority:'P2',due:'This Week',context:'Work',big3:true,completed:false}
+];
+let tasks=load();let view='Today';let search='';
+function load(){try{return JSON.parse(localStorage.getItem('focusflow_tasks_v2'))||JSON.parse(localStorage.getItem('focusflow_tasks'))||seed}catch{return seed}}
+function save(){localStorage.setItem('focusflow_tasks_v2',JSON.stringify(tasks))}
+function byPriority(a,b){return ['P1','P2','P3','P4'].indexOf(a.priority)-['P1','P2','P3','P4'].indexOf(b.priority)}
+function esc(s){return String(s).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
+function filtered(){return tasks.filter(t=>{if(search&&!t.title.toLowerCase().includes(search.toLowerCase()))return false;if(view==='Today')return t.due==='Today'&&!t.completed;if(view==='Big 3')return t.big3&&!t.completed;if(view==='This Week')return ['Today','Tomorrow','This Week'].includes(t.due)&&!t.completed;if(view==='Completed')return t.completed;if(view==='Inbox')return t.project==='Inbox'&&!t.completed;return t.project===view&&!t.completed}).sort(byPriority)}
+function render(){
+ document.getElementById('openStat').textContent=tasks.filter(t=>!t.completed).length;document.getElementById('todayStat').textContent=tasks.filter(t=>t.due==='Today'&&!t.completed).length;document.getElementById('doneStat').textContent=tasks.filter(t=>t.completed).length;
+ nav.innerHTML=views.map(v=>`<button class="${v===view?'active':''}" onclick="setView('${v.replace(/'/g,"\\'")}')"><span>${v}</span><small>${countView(v)}</small></button>`).join('');
+ viewTitle.textContent=view;listTitle.textContent=view;
+ const b=tasks.filter(t=>t.big3&&!t.completed).slice(0,3);big3.innerHTML=[0,1,2].map(i=>`<article class="card big-card"><div class="label">Big 3 #${i+1}</div>${b[i]?`<p>${esc(b[i].title)}</p>`:`<p class="empty">Choose one essential task for today.</p>`}</article>`).join('');
+ const list=filtered();taskList.innerHTML=list.length?list.map(t=>`<article class="task"><button class="check ${t.completed?'done':''}" onclick="toggleDone(${t.id})" aria-label="complete task"></button><div><p class="task-title ${t.completed?'done':''}">${esc(t.title)}</p><div class="meta"><span>${esc(t.project)}</span><span>•</span><span>${esc(t.due)}</span><span>•</span><span>${esc(t.context)}</span><span class="pill ${t.priority.toLowerCase()}">${t.priority}</span>${t.big3?'<span class="pill b3">Big 3</span>':''}</div></div><div class="task-actions"><button class="iconbtn ${t.big3?'starred':''}" onclick="toggleBig3(${t.id})" title="Big 3">★</button><button class="iconbtn" onclick="editTask(${t.id})" title="Edit">Edit</button><button class="iconbtn danger" onclick="delTask(${t.id})">Delete</button></div></article>`).join(''):`<div class="empty-state"><b>No tasks here.</b><br>Capture something above or switch views.</div>`;
+ save();
+}
+function countView(v){return tasks.filter(t=>{if(v==='Today')return t.due==='Today'&&!t.completed;if(v==='Big 3')return t.big3&&!t.completed;if(v==='This Week')return ['Today','Tomorrow','This Week'].includes(t.due)&&!t.completed;if(v==='Completed')return t.completed;if(v==='Inbox')return t.project==='Inbox'&&!t.completed;return t.project===v&&!t.completed}).length}
+function setView(v){view=v;render()} window.setView=setView;
+function add(){const title=document.getElementById('title').value.trim();if(!title)return;tasks.unshift({id:Date.now(),title,project:project.value,priority:priority.value,due:due.value,context:context.value,big3:false,completed:false});document.getElementById('title').value='';render()}
+function toggleDone(id){tasks=tasks.map(t=>t.id===id?{...t,completed:!t.completed,big3:false}:t);render()} window.toggleDone=toggleDone;
+function toggleBig3(id){const open=tasks.filter(t=>t.big3&&!t.completed).length;tasks=tasks.map(t=>{if(t.id!==id)return t;if(t.big3)return {...t,big3:false};if(open>=3){alert('You already have three Big 3 tasks. Unstar one first.');return t}return {...t,big3:true,due:'Today'}});render()} window.toggleBig3=toggleBig3;
+function delTask(id){if(confirm('Delete this task?')){tasks=tasks.filter(t=>t.id!==id);render()}} window.delTask=delTask;
+function editTask(id){const t=tasks.find(x=>x.id===id);const next=prompt('Edit task:',t.title);if(next&&next.trim()){tasks=tasks.map(x=>x.id===id?{...x,title:next.trim()}:x);render()}} window.editTask=editTask;
+projects.forEach(p=>{const o=document.createElement('option');o.textContent=p;project.appendChild(o)});addBtn.onclick=add;title.addEventListener('keydown',e=>{if(e.key==='Enter')add()});search.oninput=e=>{search=e.target.value;render()};
+exportBtn.onclick=()=>{const blob=new Blob([JSON.stringify(tasks,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='focusflow-backup.json';a.click()};
+importBtn.onclick=()=>importFile.click();importFile.onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{tasks=JSON.parse(r.result);render()}catch{alert('That backup file could not be read.')}};r.readAsText(f)};
+confirmImport.onclick=()=>{try{tasks=JSON.parse(importText.value);importDialog.close();render()}catch{alert('That text is not valid JSON.')}};
+render();
+</script>
 </body>
 </html>
