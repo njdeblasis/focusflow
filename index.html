@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FocusFlow</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="bg-slate-50">
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useEffect, useMemo, useState } = React;
+
+    const starterTasks = [
+      { id: 1, title: "Finalize structural proposal for client review", project: "Proposals / Pursuits", priority: "P1", due: "Today", context: "Work", big3: true, completed: false, notes: "" },
+      { id: 2, title: "Review open RFIs on active projects", project: "Active Projects", priority: "P1", due: "Today", context: "Work", big3: true, completed: false, notes: "" },
+      { id: 3, title: "Call key client about upcoming pursuit", project: "Business Development", priority: "P2", due: "This Week", context: "Work", big3: true, completed: false, notes: "" }
+    ];
+
+    const projects = ["Inbox", "Active Projects", "Proposals / Pursuits", "Business Development", "KPFF Operations", "Personal"];
+    const priorities = ["P1", "P2", "P3", "P4"];
+    const dueOptions = ["Today", "Tomorrow", "This Week", "Next Week", "Someday"];
+    const views = ["Today", "Big 3", "This Week", "Inbox", "Active Projects", "Proposals / Pursuits", "Business Development", "KPFF Operations", "Personal", "Completed"];
+
+    function badgeClass(priority) {
+      const map = {
+        P1: "bg-red-100 text-red-700",
+        P2: "bg-orange-100 text-orange-700",
+        P3: "bg-blue-100 text-blue-700",
+        P4: "bg-slate-100 text-slate-700"
+      };
+      return "rounded-full px-2.5 py-1 text-xs font-semibold " + (map[priority] || map.P4);
+    }
+
+    function FocusFlow() {
+      const [tasks, setTasks] = useState(() => {
+        try {
+          const saved = localStorage.getItem("focusflow_tasks_v1");
+          return saved ? JSON.parse(saved) : starterTasks;
+        } catch {
+          return starterTasks;
+        }
+      });
+      const [title, setTitle] = useState("");
+      const [project, setProject] = useState("Inbox");
+      const [priority, setPriority] = useState("P2");
+      const [due, setDue] = useState("Today");
+      const [context, setContext] = useState("Work");
+      const [view, setView] = useState("Today");
+      const [search, setSearch] = useState("");
+
+      useEffect(() => {
+        localStorage.setItem("focusflow_tasks_v1", JSON.stringify(tasks));
+      }, [tasks]);
+
+      function addTask() {
+        if (!title.trim()) return;
+        setTasks([{ id: Date.now(), title: title.trim(), project, priority, due, context, big3: false, completed: false, notes: "" }, ...tasks]);
+        setTitle("");
+      }
+
+      function toggleComplete(id) {
+        setTasks(tasks.map(t => t.id === id ? { ...t, completed: !t.completed, big3: t.completed ? t.big3 : false } : t));
+      }
+
+      function toggleBig3(id) {
+        const selected = tasks.filter(t => t.big3 && !t.completed).length;
+        setTasks(tasks.map(t => {
+          if (t.id !== id) return t;
+          if (t.big3) return { ...t, big3: false };
+          if (selected >= 3) return t;
+          return { ...t, big3: true, due: "Today" };
+        }));
+      }
+
+      function deleteTask(id) {
+        if (confirm("Delete this task?")) setTasks(tasks.filter(t => t.id !== id));
+      }
+
+      function exportTasks() {
+        const blob = new Blob([JSON.stringify(tasks, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "focusflow-backup.json";
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+
+      const filteredTasks = useMemo(() => {
+        return tasks
+          .filter(t => {
+            if (view === "Today") return t.due === "Today" && !t.completed;
+            if (view === "Big 3") return t.big3 && !t.completed;
+            if (view === "This Week") return ["Today", "Tomorrow", "This Week"].includes(t.due) && !t.completed;
+            if (view === "Completed") return t.completed;
+            return t.project === view && !t.completed;
+          })
+          .filter(t => t.title.toLowerCase().includes(search.toLowerCase()))
+          .sort((a, b) => priorities.indexOf(a.priority) - priorities.indexOf(b.priority));
+      }, [tasks, view, search]);
+
+      const big3 = tasks.filter(t => t.big3 && !t.completed);
+      const openCount = tasks.filter(t => !t.completed).length;
+      const todayCount = tasks.filter(t => t.due === "Today" && !t.completed).length;
+      const completedCount = tasks.filter(t => t.completed).length;
+
+      return (
+        <div className="min-h-screen p-4 text-slate-900 md:p-8">
+          <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[280px_1fr]">
+            <aside className="space-y-4">
+              <div className="rounded-2xl bg-white p-5 shadow-sm">
+                <h1 className="text-3xl font-bold tracking-tight">FocusFlow</h1>
+                <p className="mt-1 text-sm text-slate-500">Digital Big 3 + task triage</p>
+                <div className="mt-5 grid grid-cols-3 gap-2 text-center">
+                  <div className="rounded-xl bg-slate-50 p-3"><div className="text-lg font-bold">{openCount}</div><div className="text-xs text-slate-500">Open</div></div>
+                  <div className="rounded-xl bg-slate-50 p-3"><div className="text-lg font-bold">{todayCount}</div><div className="text-xs text-slate-500">Today</div></div>
+                  <div className="rounded-xl bg-slate-50 p-3"><div className="text-lg font-bold">{completedCount}</div><div className="text-xs text-slate-500">Done</div></div>
+                </div>
+              </div>
+              <div className="rounded-2xl bg-white p-3 shadow-sm">
+                {views.map(v => (
+                  <button key={v} onClick={() => setView(v)} className={`mb-1 w-full rounded-xl px-3 py-2.5 text-left text-sm transition ${view === v ? "bg-slate-900 text-white" : "hover:bg-slate-50"}`}>{v}</button>
+                ))}
+              </div>
+              <button onClick={exportTasks} className="w-full rounded-xl bg-white px-4 py-3 text-sm font-semibold shadow-sm hover:bg-slate-100">Export backup</button>
+            </aside>
+            <main className="space-y-6">
+              <section className="grid gap-4 md:grid-cols-3">
+                {[0,1,2].map(i => {
+                  const task = big3[i];
+                  return <div key={i} className="rounded-2xl bg-white p-5 shadow-sm"><div className="mb-2 text-sm font-semibold text-slate-500">Big 3 #{i+1}</div>{task ? <p className="font-semibold leading-snug">{task.title}</p> : <p className="text-sm text-slate-400">Choose one essential task for today.</p>}</div>;
+                })}
+              </section>
+              <section className="rounded-2xl bg-white p-5 shadow-sm">
+                <h2 className="mb-4 text-lg font-bold">Quick Capture</h2>
+                <div className="grid gap-3 lg:grid-cols-[1fr_180px_110px_140px_120px_auto]">
+                  <input value={title} onChange={e => setTitle(e.target.value)} onKeyDown={e => e.key === "Enter" && addTask()} placeholder="Add a task, action item, follow-up, or reminder..." className="rounded-xl border px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-slate-300" />
+                  <select value={project} onChange={e => setProject(e.target.value)} className="rounded-xl border px-3 py-3 text-sm">{projects.map(p => <option key={p}>{p}</option>)}</select>
+                  <select value={priority} onChange={e => setPriority(e.target.value)} className="rounded-xl border px-3 py-3 text-sm">{priorities.map(p => <option key={p}>{p}</option>)}</select>
+                  <select value={due} onChange={e => setDue(e.target.value)} className="rounded-xl border px-3 py-3 text-sm">{dueOptions.map(d => <option key={d}>{d}</option>)}</select>
+                  <select value={context} onChange={e => setContext(e.target.value)} className="rounded-xl border px-3 py-3 text-sm"><option>Work</option><option>Personal</option></select>
+                  <button onClick={addTask} className="rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-700">Add</button>
+                </div>
+              </section>
+              <section className="rounded-2xl bg-white p-5 shadow-sm">
+                <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                  <div><h2 className="text-xl font-bold">{view}</h2><p className="text-sm text-slate-500">Prioritized by P1 to P4. Star up to three tasks as today's Big 3.</p></div>
+                  <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search tasks" className="rounded-xl border px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-slate-300" />
+                </div>
+                <div className="space-y-3">
+                  {filteredTasks.length === 0 ? <div className="rounded-2xl border border-dashed p-8 text-center text-sm text-slate-500">No tasks here.</div> : filteredTasks.map(t => (
+                    <div key={t.id} className="flex items-start gap-3 rounded-2xl bg-slate-50 p-4">
+                      <button onClick={() => toggleComplete(t.id)} className="mt-1 text-xl">{t.completed ? "✓" : "○"}</button>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2"><p className={"font-medium " + (t.completed ? "text-slate-400 line-through" : "")}>{t.title}</p><span className={badgeClass(t.priority)}>{t.priority}</span>{t.big3 && <span className="rounded-full bg-green-100 px-2.5 py-1 text-xs font-semibold text-green-700">Big 3</span>}</div>
+                        <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-500"><span>{t.project}</span><span>•</span><span>{t.due}</span><span>•</span><span>{t.context}</span></div>
+                      </div>
+                      <button onClick={() => toggleBig3(t.id)} className={`rounded-xl px-3 py-2 text-sm ${t.big3 ? "bg-green-100 text-green-700" : "bg-white text-slate-600"}`}>★</button>
+                      <button onClick={() => deleteTask(t.id)} className="rounded-xl bg-white px-3 py-2 text-sm text-red-600">Delete</button>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            </main>
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<FocusFlow />);
+  </script>
+</body>
+</html>
