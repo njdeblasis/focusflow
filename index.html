@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>FocusFlow V8.1</title>
+<title>FocusFlow V8.2</title>
 <style>
 :root{--bg:#f5f7fb;--panel:#fff;--ink:#172033;--muted:#677083;--line:#dce3ee;--brand:#1f4f82;--brand2:#eaf2fb;--green:#178a4a;--red:#c24132;--gray:#6b7280;--amber:#b7791f;--blue:#2563eb;--shadow:0 8px 24px rgba(23,32,51,.08);--radius:18px}
 .dark{--bg:#111827;--panel:#1f2937;--ink:#f9fafb;--muted:#a7b0bf;--line:#374151;--brand:#74a7e8;--brand2:#142336;--shadow:0 8px 24px rgba(0,0,0,.32)}
@@ -15,7 +15,7 @@
 <script>
 const STORAGE_KEY='focusflow_database_v8_stable';
 const OLD_KEYS=['focusflow_database_v7_stable','focusflow_database_v6','focusflow_v5_data','focusflow_tasks'];
-const todayISO=()=>new Date().toISOString().slice(0,10);
+const todayISO=()=>{const d=new Date(); const y=d.getFullYear(); const m=String(d.getMonth()+1).padStart(2,'0'); const day=String(d.getDate()).padStart(2,'0'); return `${y}-${m}-${day}`;};
 const id=p=>p+'_'+Math.random().toString(36).slice(2,9);
 const money=n=>(Number(n)||0).toLocaleString(undefined,{style:'currency',currency:'USD',maximumFractionDigits:0});
 const parseDate=d=>d?new Date(d+'T00:00:00'):null;
@@ -68,7 +68,7 @@ function listOrEmpty(arr,msg,fn){return arr.length?el('div',{class:'taskList'},a
 function quickTask(){let c=el('div',{class:'card'},[el('h2',{class:'sectionTitle'},['Quick Capture Task']),el('div',{class:'form'},[
 input('taskTitle','Task title','wide'),select('taskType',['Task','Project Action','Proposal Action','Follow-Up','Meeting Action','Personal','Parking Lot']),select('taskPriority',['P1','P2','P3','P4']),input('taskDue','Task Due Date','','date'),select('taskStatus',['Today','Open','This Week','Waiting','Someday']),textarea('taskNotes','Notes','full'),el('button',{class:'btn primary',onclick:()=>{let title=val('taskTitle');if(!title)return;state.tasks.unshift({id:id('task'),title,type:val('taskType'),category:val('taskType'),priority:val('taskPriority'),dueDate:val('taskDue'),status:val('taskStatus'),big3:false,completed:false,notes:val('taskNotes')});save()}},['Add Task'])])]);return c}
 function input(idn,ph,cls='',type='text',value=''){return el('input',{id:idn,placeholder:ph,class:cls,type,value})}function textarea(idn,ph,cls=''){return el('textarea',{id:idn,placeholder:ph,class:cls})}function select(idn,opts,val0){let s=el('select',{id:idn});opts.forEach(o=>s.append(el('option',{value:o,selected:o===val0?'selected':null},[o])));return s}function val(idn){return document.getElementById(idn)?.value||''}
-function agenda(date){let mtgs=state.meetings.filter(m=>m.date===date).sort((a,b)=>timeToMin(a.time)-timeToMin(b.time));let items=[];let cursor=5*60;let endDay=21*60;for(const m of mtgs){let start=timeToMin(m.time),end=addMin(m.time,m.duration);if(start>cursor){items.push(openSlot(cursor,start));}items.push(eventSlot(m,start,end));cursor=Math.max(cursor,end)}if(cursor<endDay)items.push(openSlot(cursor,endDay));return el('div',{},[el('div',{class:'timelineNote'},['Meetings are sorted earliest to latest. Times use 12-hour format. Duration blocks stretch through the full meeting length.']),el('div',{class:'agenda'},items)])}
+function agenda(date){let mtgs=state.meetings.filter(m=>m.date===date).sort((a,b)=>timeToMin(a.time)-timeToMin(b.time));let items=[];let cursor=5*60;let endDay=21*60;for(const m of mtgs){let start=timeToMin(m.time),end=addMin(m.time,m.duration);if(start>cursor){items.push(openSlot(cursor,start));}items.push(eventSlot(m,start,end));cursor=Math.max(cursor,end)}if(cursor<endDay)items.push(openSlot(cursor,endDay));return el('div',{},[el('div',{class:'timelineNote'},['Agenda for '+fmtDate(date)+' • '+mtgs.length+' meeting'+(mtgs.length===1?'':'s')+' today. Times use 12-hour format and blocks stretch through the full meeting duration.']),el('div',{class:'agenda'},items)])}
 function openSlot(a,b){return el('div',{class:'slot'},[el('div',{class:'time'},[minTo12(a)]),el('div',{class:'slotBody'},[el('div',{class:'openBlock'},[`${minTo12(a)} – ${minTo12(b)} OPEN / FREE TIME`])])])}
 function eventSlot(m,a,b){let rows=Math.max(1,Math.ceil((b-a)/60));return el('div',{class:'slot',style:`min-height:${rows*54}px`},[el('div',{class:'time'},[minTo12(a)]),el('div',{class:'slotBody'},[el('div',{class:'event'},[el('strong',{},[m.title]),el('div',{},[`${minTo12(a)} – ${minTo12(b)} (${m.duration} min)`]),el('div',{class:'muted'},[m.attendees||''])])])])}
 function pursuits(){rootWrap('Proposal Pipeline',el('div',{class:'grid'},[proposalForm(),panel('Pipeline',pursuitTable(state.pursuits,true))]))}
